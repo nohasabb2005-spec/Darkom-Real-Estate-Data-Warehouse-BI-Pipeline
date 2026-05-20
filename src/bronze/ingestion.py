@@ -4,21 +4,20 @@ import logging
 import os
 from sqlalchemy import create_engine
 
-<<<<<<< HEAD
+
 
 os.makedirs("logs", exist_ok=True)
 
-=======
+
 # LOGGING SAFE
 os.makedirs("logs", exist_ok=True)
->>>>>>> 515c183985b7e1e8c1e1f05612011cd9cc9386fb
+
 logging.basicConfig(
     filename="logs/staging.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-<<<<<<< HEAD
 
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_NAME = os.getenv("POSTGRES_DB", "darkom_dwh")
@@ -61,20 +60,3 @@ except psycopg2.Error as db_error:
 
 except Exception as e:
     logging.exception(f"Erreur inattendue : {e}")
-=======
-# ENV VARIABLES
-DB_HOST = os.getenv("DB_HOST","localhost")
-DB_NAME = os.getenv("POSTGRES_DB","darkom_dwh")
-DB_USER = os.getenv("POSTGRES_USER","user")
-DB_PASS = os.getenv("POSTGRES_PASSWORD","Nouha12")
-DB_PORT = os.getenv("DB_PORT","5432")
-engine = create_engine(
-        f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
-
-
-
-# LOAD DATA
-df = pd.read_csv("data/darkom-annonces.csv")
-
-df.to_sql("staging_darkom",engine,if_exists="append",schema='bronze',index=False)
->>>>>>> 515c183985b7e1e8c1e1f05612011cd9cc9386fb
