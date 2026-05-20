@@ -15,6 +15,7 @@ from utils import *
 
 os.makedirs("logs", exist_ok=True)
 
+
 from utils import *
 import seaborn as sns
 from datetime import datetime 
@@ -37,7 +38,6 @@ logging.info("Début du pipeline CLEAN.")
 
 load_dotenv()
 
-
 load_dotenv()
 # ENV VARIABLES
 
@@ -48,219 +48,147 @@ DB_PASS = os.getenv("POSTGRES_PASSWORD")
 DB_PORT = os.getenv("DB_PORT")
 
 
-try:
 
-  
-    # CONNEXION DATABASE
- 
-    engine = create_engine(
-        f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    )
+engine = create_engine(
+        f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
 
-    logging.info("Connexion PostgreSQL réussie.")
 
-    
-    # EXTRACTION DATA
-   
-    query = "SELECT * FROM bronze.staging_darkom;"
-    df = pd.read_sql(query, engine)
+query="""select * from bronze.staging_darkom;"""
+df=pd.read_sql(query,engine)
 
-    logging.info(f"Données chargées : {df.shape[0]} lignes.")
+print(df.head())
 
-    # DUPLICATES
-    
-    duplicates = df.duplicated().sum()
+print("===================")
+print(df.info())
 
-    logging.warning(f"Nombre de doublons détectés : {duplicates}")
+print("==============")
+print(df.dtypes)
+print("=======")
+print(df.columns)
+print("======================")
+double=df.duplicated().sum()
+print("Nombre des doublons: ",double)
+df=df.drop_duplicates(subset="annonce_id")
+print("les dimensions du df: ",df.shape)
 
-    df = df.drop_duplicates(subset="annonce_id")
+print("=================")
+taux_null=df.isnull().mean()*100
+print(taux_null)
 
-    logging.info(f"Shape après suppression doublons : {df.shape}")
+taux_null.sort_values(ascending=False).plot(kind="barh",color='pink')
+plt.title("Taux des valeurs manquantes")
+plt.xlabel("Pourcentage")
+plt.ylabel("Colonnes")
+plt.xticks(rotation=55)
+plt.show()
+print("=========================")
+print("=============Traiter les valeurs manquantes===============")
+print("////////Categories//////")
+df["quartier"] = df.groupby("ville")["quartier"].transform(fill_mode)
 
-   
-    # VALEURS MANQUANTES
-   
-    taux_null = df.isnull().mean() * 100
+df["type_bien"] = df.groupby("ville")["type_bien"].transform(fill_mode)
 
-    logging.info("Calcul des valeurs manquantes terminé.")
+df["transaction"] = df.groupby(["ville", "type_bien"])["transaction"].transform(fill_mode)
 
-    # Visualisation
-    taux_null.sort_values(ascending=False).plot(
-        kind="barh",
-        color="pink"
-    )
 
-    plt.title("Taux des valeurs manquantes")
-    plt.xlabel("Pourcentage")
-    plt.ylabel("Colonnes")
+print("////////////Numeriques/////")
+num_cols = ["nb_salles_bain", "annee_construction", "nb_chambres", "etage"]
 
-    plt.tight_layout()
+palette = sns.color_palette("Set2", len(num_cols))
 
-    plt.savefig("logs/missing_values.png")
-    plt.close()
+plt.figure(figsize=(12,8))
 
-   
-    # TRAITEMENT VARIABLES CATEGORIELLES
-  
-    logging.info("Traitement des variables catégorielles.")
+for i, col in enumerate(num_cols):
+    plt.subplot(2, 2, i+1)
+    sns.histplot(df[col], bins=30, kde=True, color=palette[i])
+    plt.title(f"Distribution de {col}")
 
-    df["quartier"] = (
-        df.groupby("ville")["quartier"]
-        .transform(fill_mode)
-    )
+plt.tight_layout()
+plt.show()
 
-    df["type_bien"] = (
-        df.groupby("ville")["type_bien"]
-        .transform(fill_mode)
-    )
 
-    df["transaction"] = (
-        df.groupby(["ville", "type_bien"])["transaction"]
-        .transform(fill_mode)
-    )
+df['nb_salles_bain']=df['nb_salles_bain'].fillna(df['nb_salles_bain'].median())
+df['annee_construction']=df['annee_construction'].fillna(df['annee_construction'].median())
+df['nb_chambres']=df['nb_chambres'].fillna(df['nb_chambres'].median())
+df['etage']=df['etage'].fillna(df['etage'].median())
 
-    
-    # VARIABLES NUMERIQUES
-   
-    num_cols = [
-        "nb_salles_bain",
-        "annee_construction",
-        "nb_chambres",
-        "etage"
-    ]
 
-    for col in num_cols:
-        median_value = df[col].median()
-        df[col] = df[col].fillna(median_value)
+#df["date_publication"] = pd.to_datetime(df["date_publication"], errors="coerce")
+#df["date_publication"] = df["date_publication"].fillna(pd.Timestamp("2026-01-01"))
+df["date_publication"] = (
+    pd.to_datetime(df["date_publication"], format='mixed')
+      .ffill()
+)
+df["annee"] = df["date_publication"].dt.year
+df["mois"] = df["date_publication"].dt.month
+df["trimestre"] = df["date_publication"].dt.quarter
+df["semaine"] = df["date_publication"].dt.isocalendar().week
 
-        logging.info(f"NaN remplacés dans {col} par médiane.")
+taux_null=df.isnull().sum()
+print(taux_null)
 
-   
-    # DATE
 
-    df["date_publication"] = pd.to_datetime(
-        df["date_publication"],
-        errors="coerce"
-    )
+print("=============Outliers =============")
 
-    df["date_publication"] = df["date_publication"].ffill()
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
-    logging.info("Transformation date_publication réussie.")
+axes[0].hist(df['prix'].dropna(), bins=20, color="#D5D7A6", edgecolor='black')
+axes[0].set_title("prix")
+axes[0].set_xlabel("prix")
+# ================= SURFACE =================
+axes[1].hist(df['surface'].dropna(), bins=20, color="#E93565", edgecolor='black')
+axes[1].set_title("Surface")
+axes[1].set_xlabel("Surface")
 
-    # FEATURES TEMPORELLES
-    df["annee"] = df["date_publication"].dt.year
-    df["mois"] = df["date_publication"].dt.month
-    df["trimestre"] = df["date_publication"].dt.quarter
-    df["semaine"] = df["date_publication"].dt.isocalendar().week
+# ================= NB CHAMBRES =================
+axes[2].hist(df['nb_chambres'].dropna(), bins=20, color="#A6C7D7", edgecolor='black')
+axes[2].set_title("Nb chambres")
+axes[2].set_xlabel("Nb chambres")
 
-    
-    # OUTLIERS
-  
-    cols = ["prix", "surface", "nb_chambres"]
+plt.tight_layout()
+plt.show()
 
-    df_clean = df.copy()
+cols = ["prix", "surface", "nb_chambres"]
 
-    for col in cols:
+df_clean = df.copy()
 
-        Q1 = df_clean[col].quantile(0.25)
-        Q3 = df_clean[col].quantile(0.75)
+for col in cols:
+    Q1 = df_clean[col].quantile(0.25)
+    Q3 = df_clean[col].quantile(0.75)
+    IQR = Q3 - Q1
 
-        IQR = Q3 - Q1
+    lower = Q1 - 1.5 * IQR
+    upper = Q3 + 1.5 * IQR
 
-        lower = Q1 - 1.5 * IQR
-        upper = Q3 + 1.5 * IQR
+    df_clean = df_clean[(df_clean[col] >= lower) & (df_clean[col] <= upper)]
 
-        before = df_clean.shape[0]
+print("Shape avant :", df.shape)
+print("Shape après :", df_clean.shape)
 
-        df_clean = df_clean[
-            (df_clean[col] >= lower)
-            & (df_clean[col] <= upper)
-        ]
 
-        after = df_clean.shape[0]
+print("============Standardisation des données==========")
+df_clean['ville']=df_clean['ville'].map(uniformiser)
+df_clean["type_bien"] = df_clean["type_bien"].astype(str).str.strip().str.lower()
+df_clean["transaction"] = df_clean["transaction"].astype(str).str.strip().str.lower()
+unique=df_clean['ville'].unique()
+print(unique)
+print("================Feature Engineering=========")
 
-        logging.info(
-            f"Outliers supprimés pour {col} : {before - after}"
-        )
+df_clean['prix_m2']=df_clean['prix']/df_clean['surface']
 
-   
-    # STANDARDISATION
-   
-    df_clean["ville"] = df_clean["ville"].map(uniformiser)
+df_clean["Age_estime_bien_immobilier"]=datetime.now().year - df_clean['annee_construction']
 
-    df_clean["type_bien"] = (
-        df_clean["type_bien"]
-        .astype(str)
-        .str.strip()
-        .str.lower()
-    )
+df_clean['categorie_prix']=pd.qcut(df_clean['prix'],q=4,labels=["Economique","Moyen","Haut standing","Luxe"])
 
-    df_clean["transaction"] = (
-        df_clean["transaction"]
-        .astype(str)
-        .str.strip()
-        .str.lower()
-    )
+df_clean["categorie_surface"]=df['surface'].apply(Catégories_surface)
+print(df_clean.shape)
 
-    logging.info("Standardisation terminée.")
+df_clean = df_clean.rename(columns={
+    "Age_estime_bien_immobilier": "age_estime_bien_immobilier"
+})
 
-  
-    # FEATURE ENGINEERING
-  
-    df_clean["prix_m2"] = (
-        df_clean["prix"] / df_clean["surface"]
-    )
+df_clean["date_publication"] = pd.to_datetime(
+    df_clean["date_publication"]
+).dt.date
+df_clean.to_sql("clean",engine,schema="silver",if_exists='append',index=False)
 
-    df_clean["age_estime_bien_immobilier"] = (
-        datetime.now().year
-        - df_clean["annee_construction"]
-    )
-
-    df_clean["categorie_prix"] = pd.qcut(
-        df_clean["prix"],
-        q=4,
-        labels=[
-            "Economique",
-            "Moyen",
-            "Haut standing",
-            "Luxe"
-        ]
-    )
-
-    # CORRECTION BUG
-    df_clean["categorie_surface"] = (
-        df_clean["surface"].apply(Catégories_surface)
-    )
-
-    logging.info("Feature engineering terminé.")
-
-   
-    df_clean["date_publication"] = pd.to_datetime(
-        df_clean["date_publication"]
-    ).dt.date
-
-  
-    if not df_clean.empty:
-
-        df_clean.to_sql(
-            "clean",
-            engine,
-            schema="silver",
-            if_exists="append",
-            index=False
-        )
-
-        logging.info(
-            f"Données insérées dans silver.clean : {df_clean.shape}"
-        )
-
-    else:
-        logging.warning("DataFrame vide. Aucune insertion.")
-
-except Exception as e:
-
-    logging.exception(f"Erreur dans pipeline clean : {e}")
-
-finally:
-
-    logging.info("Fin du pipeline CLEAN.")
