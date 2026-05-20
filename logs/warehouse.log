@@ -1,0 +1,14 @@
+2026-05-20 09:44:41,399 - INFO - Début pipeline GOLD.
+2026-05-20 09:44:41,689 - INFO - Connexion PostgreSQL réussie.
+2026-05-20 09:44:41,751 - INFO - Schema GOLD recréé.
+2026-05-20 09:44:41,788 - INFO - Données SILVER chargées : (994, 21)
+2026-05-20 09:44:41,788 - INFO - Création dim_temps.
+2026-05-20 09:44:41,840 - INFO - Création dim_type_bien.
+2026-05-20 09:44:41,870 - INFO - Création dim_categorie_prix.
+2026-05-20 09:44:41,895 - INFO - Création dim_transaction.
+2026-05-20 09:44:41,919 - INFO - Création dim_ville.
+2026-05-20 09:44:41,941 - INFO - Création dim_quartier.
+2026-05-20 09:44:41,972 - INFO - Création fact_annonces.
+2026-05-20 09:44:42,003 - INFO - Fact table créée : (4876, 14)
+2026-05-20 09:44:42,441 - INFO - Chargement GOLD terminé avec succès.
+2026-05-20 09:44:42,441 - INFO - Fin pipeline GOLD.

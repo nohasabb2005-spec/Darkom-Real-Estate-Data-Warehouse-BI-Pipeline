@@ -1,0 +1,4 @@
+2026-05-20 09:33:23,663 - INFO - Connexion à PostgreSQL réussie.
+2026-05-20 09:33:23,685 - INFO - Fichier CSV chargé avec succès : data/darkom-annonces.csv
+2026-05-20 09:33:23,686 - INFO - Nombre de lignes : 1508
+2026-05-20 09:33:23,962 - INFO - Insertion des données dans bronze.staging_darkom réussie.

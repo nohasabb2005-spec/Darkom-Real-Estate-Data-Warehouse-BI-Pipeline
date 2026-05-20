@@ -1,0 +1,19 @@
+2026-05-20 09:33:36,767 - INFO - Début du pipeline CLEAN.
+2026-05-20 09:33:36,864 - INFO - Connexion PostgreSQL réussie.
+2026-05-20 09:33:36,947 - INFO - Données chargées : 1508 lignes.
+2026-05-20 09:33:36,961 - WARNING - Nombre de doublons détectés : 8
+2026-05-20 09:33:36,966 - INFO - Shape après suppression doublons : (1500, 13)
+2026-05-20 09:33:36,969 - INFO - Calcul des valeurs manquantes terminé.
+2026-05-20 09:33:37,795 - INFO - Traitement des variables catégorielles.
+2026-05-20 09:33:38,056 - INFO - NaN remplacés dans nb_salles_bain par médiane.
+2026-05-20 09:33:38,057 - INFO - NaN remplacés dans annee_construction par médiane.
+2026-05-20 09:33:38,058 - INFO - NaN remplacés dans nb_chambres par médiane.
+2026-05-20 09:33:38,059 - INFO - NaN remplacés dans etage par médiane.
+2026-05-20 09:33:38,061 - INFO - Transformation date_publication réussie.
+2026-05-20 09:33:38,070 - INFO - Outliers supprimés pour prix : 101
+2026-05-20 09:33:38,072 - INFO - Outliers supprimés pour surface : 62
+2026-05-20 09:33:38,075 - INFO - Outliers supprimés pour nb_chambres : 343
+2026-05-20 09:33:38,081 - INFO - Standardisation terminée.
+2026-05-20 09:33:38,088 - INFO - Feature engineering terminé.
+2026-05-20 09:33:38,289 - INFO - Données insérées dans silver.clean : (994, 21)
+2026-05-20 09:33:38,289 - INFO - Fin du pipeline CLEAN.
